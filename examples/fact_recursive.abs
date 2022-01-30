@@ -1,0 +1,10 @@
+# recursive variant of factorial calculation
+fun(fact,m,
+   if(eq(m,1),
+      set(f,1),
+      set(f,mult(m,fact(sub(m,1))))
+   )
+   f
+)
+print("Test of factorial\n")
+print("5! = ",fact(5),"\n")

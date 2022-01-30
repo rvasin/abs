@@ -1,0 +1,13 @@
+# fib function will find Nth number of Fibonacci Sequence using recursion
+
+fun(fib,n,
+   var(r)
+   if(eq(n,0),set(r,0),
+      if(eq(n,1),set(r,1),
+         set(r,add(fib(sub(n,2)),fib(sub(n,1))))
+      )
+   )
+   r)
+ 
+print("Fibonacci test\n")
+print(fib(10),"\n")

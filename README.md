@@ -29,6 +29,7 @@ fun(fib,n,
 print("Fibonacci test\n")
 print(fib(10),"\n")
 ```
+More examples could be found in /examples/ folder.
 
 Watch the following video tutorial on YouTube:
 https://www.youtube.com/watch?v=Kyp9772UYHI

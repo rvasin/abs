@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
    }
 
    if (FileName.size()>0) {
-      // to-do: check for file existance
+      // to-do: check for file existence
       file_read(FileName,code);
       bcode->Process(code);
    } else {
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
          cout << "abs> ";
          getline(cin,code); // correct way to read whole line until \n
          bcode->Process(code);
-         // to-do: probably it should print evalution result.
+         // to-do: probably it should print evaluation result.
          // but it's better not do it.
       }
    }

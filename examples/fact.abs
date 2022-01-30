@@ -1,0 +1,12 @@
+# non-recursive variant of factorial calculation
+fun(fact,m,
+   set(n,1)
+   set(f,1)
+   while(less(n,add(m,1)),
+      set(f,mult(f,n))
+      inc(n)
+   )
+   f
+)
+print("Test of factorial\n")
+print("5! = ",fact(5),"\n")
