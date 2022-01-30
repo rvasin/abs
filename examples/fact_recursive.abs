@@ -1,5 +1,6 @@
 # recursive variant of factorial calculation
 fun(fact,m,
+   var(r)
    if(eq(m,1),
       set(f,1),
       set(f,mult(m,fact(sub(m,1))))

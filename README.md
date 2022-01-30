@@ -10,7 +10,7 @@ function(a, b, c)
  
 For example, hello world:
 ```
-print("Hello world\")
+print("Hello world\n")
 ```
 Even conditional blocks like if or switch has the same syntax.
 Custom recursive functions are supported too.
@@ -29,6 +29,7 @@ fun(fib,n,
 print("Fibonacci test\n")
 print(fib(10),"\n")
 ```
+
 More examples could be found in /examples/ folder.
 
 Watch the following video tutorial on YouTube:
