@@ -1,0 +1,19 @@
+# find Nth prime number
+# for example, prime numbers: 2, 3, 5, 7, 11, 13
+# for max_n=4 it will print 7 as 4th prime number
+
+print("prime number search\n")
+set(max_n,4) # set Nth primer number to find
+set(found_n,0)
+set(n,1)
+while(less(found_n,max_n),
+   inc(n)
+   set(found,0)
+   set(i,2)
+   while(and(less(i,n),eq(found,0)),
+      if(eq(mod(n,i),0),  
+         set(found,1),
+         inc(i)))
+   if(eq(found,0),inc(found_n))
+)
+print(max_n,"-th prime number is ",n,"\n")
