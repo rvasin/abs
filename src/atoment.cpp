@@ -12,7 +12,7 @@ AtomEnt::AtomEnt()
 void AtomEnt::ClearListValue()
 {
    /*
-   vector<AtomEnt *>::iterator it;
+   std::vector<AtomEnt *>::iterator it;
    for(it = ListValue.begin(); it != ListValue.end(); ++it) {
        delete it;
    }
@@ -71,7 +71,7 @@ void AtomEnt::RemoveListElem(int i)
    ListValue->erase(ListValue->begin()+i);
 }
 
-void AtomEnt::PutListValue(vector<AtomEnt *> *&AListValue)
+void AtomEnt::PutListValue(std::vector<AtomEnt *> *&AListValue)
 {
    AListValue=ListValue;
 }

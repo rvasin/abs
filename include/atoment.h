@@ -25,7 +25,7 @@ protected:
    double DoubleValue;
    int IntValue;
    string StringValue;
-   vector<AtomEnt *> *ListValue;
+   std::vector<AtomEnt *> *ListValue;
 public:
    AtomEnt();
    ~AtomEnt();
@@ -39,14 +39,14 @@ public:
    string GetString() { return StringValue;};
    string ToString();
    void ClearListValue();
-   void CreateListValue() { ListValue=new vector<AtomEnt *>;};
+   void CreateListValue() { ListValue=new std::vector<AtomEnt *>;};
    void AddListElem(AtomEnt *elem) { ListValue->push_back(elem);};
    AtomEnt *GetListElem(int i) { return ListValue->at(i);};
    void SetListElem(int i, AtomEnt * elem);
    void RemoveListElem(int i);
    void InsertListElem(int i, AtomEnt *elem) { ListValue->insert(ListValue->begin()+i,elem);};
    int GetListSize() { return ListValue->size();};
-   void PutListValue(vector<AtomEnt *> *&AListValue);
+   void PutListValue(std::vector<AtomEnt *> *&AListValue);
    void PrintValue();
    void Assign(AtomEnt *Atom);
    bool Equals(AtomEnt *Atom);

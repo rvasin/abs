@@ -14,7 +14,7 @@ CMake 3.15+, C++11 with extensions ON. The extension matters: on MinGW `run()` n
 
 All four translation units compile standalone under `-std=c++11`. That was not true before `941059c`: `include/atoment.h` uses `vector` but had no `#include <vector>`, so it only built if something else included it first, and `src/atoment.cpp` — the one TU that includes `atoment.h` first — failed with ~24 errors. The header now includes `<vector>` itself. Don't remove it.
 
-One genuine coupling is left. `atoment.h` writes `vector` unqualified, so it needs `using namespace std`, which it gets from `utils.h` included at line 16; the first bare `vector` is not until line 28. Moving the `utils.h` include below line 28 breaks it. Qualifying those four occurrences as `std::vector` would remove the last order dependency.
+One order dependency is left, and `std::vector` qualification only half fixed it. `atoment.h` writes `string` unqualified (lines 27, 38, 39, 40), so it still needs `using namespace std`, which it gets from `utils.h` included at line 16. Move that include below the class and the header fails with 13 errors. Qualifying those four uses as `std::string` would remove the last order dependency. The three `vector` uses are already qualified as `std::vector`.
 
 `.gitignore` covers `build/`, the CMake files, Python caches, `backup/`, the bare `abs` binary and `abs.zip`.
 
