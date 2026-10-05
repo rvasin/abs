@@ -1,0 +1,21 @@
+# control flow: if/while/do/switch yield 1 or 0, never the branch value
+set(r,0)
+set(matched,if(1,set(r,"then"),set(r,"else")))
+print("if took then: ",r," and returned ",matched,"\n")
+
+set(i,0)
+set(total,0)
+while(less(i,10),
+   set(total,add(total,i))
+   inc(i))
+print("while summed 0..9 = ",total," i=",i,"\n")
+
+set(k,0)
+do(set(k,add(k,1)),less(k,3))
+print("do-while ran ",k," times\n")
+
+set(choice,"none")
+switch(choice,"a",set(choice,"got a"),"b",set(choice,"got b"),set(choice,"fell through"))
+print(choice,"\n")
+switch("b","a",set(choice,"got a"),"b",set(choice,"got b"),set(choice,"fell through"))
+print(choice,"\n")

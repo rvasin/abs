@@ -1,0 +1,7 @@
+bump_no_comma: g=2
+bump_cmd:      g=2
+bump_comma:    g=0
+square(7)=49
+pick(1)=yes  if() returned 1  pick(0)=no
+fact(5)=120 fact(0)=1
+first second

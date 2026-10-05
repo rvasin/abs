@@ -1,0 +1,68 @@
+# Function definitions.
+#
+# The rule that governs this file: in a fun parameter list, commas separate
+# *declared arguments*. Whatever follows the last declared argument, up to the
+# closing paren, is the body - and a multi-statement body is wrapped in an
+# implicit cmd() by the parser.
+#
+# A comma before the last statement does NOT separate statements; it makes the
+# parser read that statement as the *name* of the next argument. Compare
+# bump_no_comma (g reaches 2) with bump_comma (the body never runs, g stays 0).
+
+# zero declared arguments, body last, no comma before it
+fun(bump_no_comma,
+   set(g,add(g,1))
+   g)
+set(g,0)
+bump_no_comma()
+bump_no_comma()
+print("bump_no_comma: g=",g,"\n")
+
+# the same thing with an explicit cmd() around the body
+fun(bump_cmd, cmd(set(g,add(g,1)),g))
+set(g,0)
+bump_cmd()
+bump_cmd()
+print("bump_cmd:      g=",g,"\n")
+
+# the comma mistake: the two statements become phantom argument names, so the
+# "body" is just the variable g and the function is a no-op
+fun(bump_comma,
+   set(g,add(g,1)),
+   g)
+set(g,0)
+bump_comma()
+print("bump_comma:    g=",g,"\n")
+
+# one declared argument, then the body
+fun(square,n,
+   var(r)
+   set(r,mult(n,n))
+   r)
+print("square(7)=",square(7),"\n")
+
+# the body is what the call evaluates to: if() returns 1/0, never a branch value
+fun(pick,flag,
+   var(r)
+   set(r,"no")
+   if(flag,set(r,"yes"))
+   r)
+print("pick(1)=",pick(1),"  if() returned ",if(1),"  pick(0)=",pick(0),"\n")
+
+# recursion, with the body last and no comma before it
+fun(fact,n,
+   var(r)
+   if(eq(n,0),set(r,1),set(r,mult(n,fact(sub(n,1)))))
+   r)
+print("fact(5)=",fact(5)," fact(0)=",fact(0),"\n")
+
+# functions are global, and a later definition replaces an earlier one.
+# Do NOT close the parameter list right after the name, as in
+# "fun(who) set(who,...)": the parser then swallows the following statements
+# as further parameters of who, and the result is neither an error nor what you
+# wrote. Always put the body inside the parentheses.
+fun(who, set(who,"first") who)
+print(who()," ")
+fun(who, set(who,"second") who)
+print(who(),"\n")
+

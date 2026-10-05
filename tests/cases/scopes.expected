@@ -1,0 +1,4 @@
+local returned: local only
+global v is: error: variable v not found
+g after two bumps: 2
+shadow returned shadowed while global g is still 2

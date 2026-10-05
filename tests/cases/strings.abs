@@ -1,0 +1,10 @@
+# string handling
+set(s,"The quick brown fox")
+print(upper(s),"\n")
+print(lower(s),"\n")
+print(len(s)," ",pos(s,"quick")," ",pos(s,"zzz"),"\n")
+print(copy(s,4,5),"|",erase(s,4,5),"|",insert(s,4,"very "),"\n")
+print(replace(s,"quick","slow"),"\n")
+print(trim("   padded   "),"|\n")
+print(cat("a",1,2.5),"|\n")
+print(char(72)," ",str(1234)," ",int("56")," ",float("2.5"),"\n")

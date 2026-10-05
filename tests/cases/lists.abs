@@ -1,0 +1,13 @@
+# lists
+set(a,list(1,2,3))
+print(a," ",listsize(a),"\n")
+print(listget(a,1),"\n")
+set(b,listcopy(a))
+print("copy: ",b,"\n")
+listappend(b,4)
+print("after append: ",a," vs ",b,"\n")
+print(listinsert(b,0,0)," -> ",b,"\n")
+print(listremove(b,1)," -> ",b,"\n")
+set(nested,list(list(1,2),list(3,4)))
+print("nested: ",nested," outer size ",listsize(nested),"\n")
+print("inner: ",listget(nested,1),"\n")

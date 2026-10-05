@@ -1,0 +1,8 @@
+# arithmetic: functional operators, integer division, promotion
+print(add(1,2,3),"\n")
+print(mult(2,3,4),"\n")
+print(sub(10,3)," ",div(7,2)," ",div(7.0,2)," ",mod(7,3),"\n")
+print(sqrt(2)," ",sqr(5)," ",pow(3,4)," ",abs(-7),"\n")
+print(floor(2.9)," ",ceil(2.1)," ",trunc(2.9)," ",round(2.5),"\n")
+print(max(1,9,4)," ",min(1,9,4),"\n")
+print(pi()," ",e(),"\n")

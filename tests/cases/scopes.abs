@@ -1,0 +1,19 @@
+# var() declares a function-local; set() otherwise writes to the global table.
+#
+# Two parser rules bite here, both pinned by this case:
+#  1. every parameter needs a real separator - a newline is not one
+#  2. the LAST parameter is the body, so a zero-argument function with more
+#     than one statement must wrap the body in an explicit cmd()
+
+fun(showlocal, cmd(var(v), set(v,"local only"), v))
+print("local returned: ",showlocal(),"\n")
+print("global v is: ",v,"\n")
+
+fun(bump, cmd(set(g,add(g,1)),g))
+set(g,0)
+bump()
+bump()
+print("g after two bumps: ",g,"\n")
+
+fun(shadow, cmd(var(g), set(g,"shadowed"), g))
+print("shadow returned ",shadow()," while global g is still ",g,"\n")
