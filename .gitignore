@@ -26,7 +26,28 @@
 *.a
 *.lib
 
-# Executables
+# CMake / build output
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+compile_commands.json
+
+# The interpreter binary (g++/CMake emit "abs" on Linux, "abs.exe" on Windows)
+abs
 *.exe
 *.out
 *.app
+
+# Python test tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.tox/
+.venv/
+venv/
+
+# Local scratch: large unreferenced media and release bundles
+backup/
+abs.zip
