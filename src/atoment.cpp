@@ -95,9 +95,9 @@ void AtomEnt::PrintValue()
    }
 }
 
-string AtomEnt::ToString()
+std::string AtomEnt::ToString()
 {
-   string result="";
+   std::string result="";
    switch (AtomType) {
    case atDouble: {
    // to_string() is function of C++11.

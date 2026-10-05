@@ -24,7 +24,7 @@ protected:
    TAtomType AtomType;
    double DoubleValue;
    int IntValue;
-   string StringValue;
+   std::string StringValue;
    std::vector<AtomEnt *> *ListValue;
 public:
    AtomEnt();
@@ -35,9 +35,9 @@ public:
    double GetDouble();
    void SetInt(int value) { IntValue = value;};
    int GetInt() { return IntValue;};
-   void SetString(const string& value) { StringValue = value;};
-   string GetString() { return StringValue;};
-   string ToString();
+   void SetString(const std::string& value) { StringValue = value;};
+   std::string GetString() { return StringValue;};
+   std::string ToString();
    void ClearListValue();
    void CreateListValue() { ListValue=new std::vector<AtomEnt *>;};
    void AddListElem(AtomEnt *elem) { ListValue->push_back(elem);};

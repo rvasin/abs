@@ -64,7 +64,9 @@ Note the `src/*.cpp` glob: building only `src/abs.cpp` would miss three
 translation units. That mattered when `include/atoment.h` used `vector`
 without including `<vector>` — only `src/atoment.cpp` included that header
 first, so it was the single TU that failed while the others still compiled.
-The header now includes `<vector>` itself and every file builds standalone.
+The header now includes `<vector>` itself, qualifies every type it uses, and
+every file builds standalone. `tests/test_build.py` compiles each one in
+isolation so the two properties cannot silently regress.
 
 On MinGW use `-std=gnu++11` rather than `-std=c++11`: `run()` needs `popen`,
 which is a GNU extension there. The CMake build sets
