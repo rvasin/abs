@@ -80,6 +80,7 @@ protected:
    bool GetVarName(TreeNode *node, string& VarName, map<string,AtomEnt *> * locvars = NULL);
    void EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *> * locvars = NULL);
    void DeleteTreeNode(TreeNode *node);
+   TreeNode *CloneTreeNode(TreeNode *node);
    void PrintTreeNode(TreeNode *node, string align="");
    void ClearLocalVars(map<string,AtomEnt *> * locvars);
 public:

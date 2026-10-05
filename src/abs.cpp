@@ -105,6 +105,14 @@ ByteCode::~ByteCode()
    }
    // if we call it in destructor then we don't need to call it. it's caller automatically by destructor
    vars.clear();
+   // custom functions are owned by custcodes: each entry is a deep copy made in
+   // f_fun, because the tree it was parsed from is freed by Process()
+   map<string,TreeNode *>::iterator fit;
+   for(fit = custcodes.begin(); fit != custcodes.end(); ++fit) {
+      DeleteTreeNode(fit->second);
+      delete fit->second;
+   }
+   custcodes.clear();
 }
 
 void ByteCode::SetArgList(int argc, char *argv[])
@@ -693,16 +701,44 @@ void ByteCode::EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *>
       if (debug) atom->PrintValue();
       break;
    }
-   case f_unset:
+   case f_unset: {
       // unset("varname")  - remove variable definition
+      // returns: 0 if unset was successful (variable was found) and 1 otherwise.
       paramnode1 = node->GetParam(0);
       EvalTreeNode(paramnode1,param1,locvars);
-      // to-do: implement it
-      // to-do: call ClearListValue()
-      // returns: 0 if unset was successful (variable was found) and 1 otherwise.
+      string VarName = param1->GetString();
+      AtomEnt *var = NULL;
+      bool found_local = false;
+      if (locvars) {
+         map<string,AtomEnt *>::const_iterator ifind = locvars->find(VarName);
+         if ( ifind != locvars->end() ) {
+            var = ifind->second;
+            found_local = true;
+         }
+      }
+      if (!var) {
+         map<string,AtomEnt *>::const_iterator ifind = vars.find(VarName);
+         if ( ifind != vars.end() ) {
+            var = ifind->second;
+         }
+      }
+      int r = 1;
+      if (var) {
+         // drop the entry from whichever map owns it, so that the cleanup of
+         // local variables (ClearLocalVars) does not free it a second time
+         if (found_local) {
+            locvars->erase(VarName);
+         } else {
+            vars.erase(VarName);
+         }
+         var->ClearListValue();
+         delete var;
+         r = 0;
+      }
       atom->SetAtomType(atInt);
-      atom->SetInt(0);
+      atom->SetInt(r);
       break;
+   }
    case f_eq: case f_noteq: {
       paramnode1 = node->GetParam(0);
       paramnode2 = node->GetParam(1);
@@ -764,24 +800,32 @@ void ByteCode::EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *>
       break;
    }
    fun_comp(f_less,<)
-   fun_comp(f_lesseq,<)
+   fun_comp(f_lesseq,<=)
    fun_comp(f_gr,>)
    fun_comp(f_greq,>=)
    case f_if: {
       // to-do: implement multiple conditions and actions
-      paramnode1 = node->GetParam(0);
-      EvalTreeNode(paramnode1,param1,locvars);
-      double r;
-      if (param1->GetDouble()!=0) {
-         paramnode2 = node->GetParam(1);
-         EvalTreeNode(paramnode2,param2,locvars);
-         r = 1;
-      } else {
-         if (node->GetParamCount()==3) {
-            paramnode2 = node->GetParam(2);
-            EvalTreeNode(paramnode2,param2,locvars);
+      // if(cond) and if(cond,then) are accepted: a missing branch is simply not
+      // evaluated. Without this guard GetParam(1) reads past the parameter
+      // vector, which crashes the interpreter on e.g. print(if(1))
+      int pcount = node->GetParamCount();
+      double r = 0;
+      if (pcount > 0) {
+         paramnode1 = node->GetParam(0);
+         EvalTreeNode(paramnode1,param1,locvars);
+         if (param1->GetDouble()!=0) {
+            if (pcount > 1) {
+               paramnode2 = node->GetParam(1);
+               EvalTreeNode(paramnode2,param2,locvars);
+            }
+            r = 1;
+         } else {
+            if (pcount > 2) {
+               paramnode2 = node->GetParam(2);
+               EvalTreeNode(paramnode2,param2,locvars);
+            }
+            r=0;
          }
-         r=0;
       }
       // the very good question what should return if function - a number
       // or a result of evaluation of the working condition
@@ -799,22 +843,35 @@ void ByteCode::EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *>
    }
    case f_switch: {
       // to-do: implement multiple conditions and actions
-      paramnode1 = node->GetParam(0);
-      EvalTreeNode(paramnode1,param1,locvars);
+      int pcount=node->GetParamCount();
       double r=0;
       int action_index=0;
-      int pcount=node->GetParamCount();
-      for (int i=1; i<pcount; i+=2) {
+      if (pcount < 1) {
+         // switch() with no arguments has nothing to match on
+         atom->SetAtomType(atDouble);
+         atom->SetDouble(r);
+         break;
+      }
+      paramnode1 = node->GetParam(0);
+      EvalTreeNode(paramnode1,param1,locvars);
+      // a condition sits at an odd index and its action at the next one.
+      // the loop stops before the last index so that a trailing default
+      // action is never mistaken for a condition.
+      for (int i=1; i+1<pcount; i+=2) {
          paramnode2 = node->GetParam(i);
          AtomEnt *cond_param = new AtomEnt(); // should we allocate it each time? or maybe allocate it once before for loop?
          EvalTreeNode(paramnode2,cond_param,locvars);
-         if (param1->Equals(cond_param)) {
+         bool match = param1->Equals(cond_param);
+         delete cond_param;
+         if (match) {
             action_index = i+1;
+            r = 1;
             break;
          }
-         delete cond_param;
       }
-      if (action_index==0 && pcount / 2 == 0) action_index = pcount-1;
+      // an even number of params means the cond/action pairs did not use up
+      // the last one, so it is the default action
+      if (action_index==0 && pcount%2==0) action_index = pcount-1;
       if (action_index>0) {
          paramnode2 = node->GetParam(action_index);
          EvalTreeNode(paramnode2,param2,locvars);
@@ -825,6 +882,12 @@ void ByteCode::EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *>
    }
    case f_while: {
       // first param is condition, second param is body
+      // while(cond) without a body has nothing to repeat, so it just returns 0
+      if (node->GetParamCount() < 2) {
+         atom->SetAtomType(atInt);
+         atom->SetInt(0);
+         break;
+      }
       paramnode1 = node->GetParam(0);
       EvalTreeNode(paramnode1,param1,locvars);
       while (param1->GetDouble()!=0) {
@@ -843,12 +906,23 @@ void ByteCode::EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *>
       // first param is body, second param is condition
       // it works the same way as do/while loop in C/C++
       // and not as repeat/until loop in Pascal
+      // do(body) without a condition runs the body exactly once
+      if (node->GetParamCount() < 1) {
+         atom->SetAtomType(atInt);
+         atom->SetInt(0);
+         break;
+      }
       do {
          // should we get refs to paranode1 and paramnode2 each time in do()? most prob do it only once before do()
          paramnode1 = node->GetParam(0);
          EvalTreeNode(paramnode1,param1,locvars);
-         paramnode2 = node->GetParam(1);
-         EvalTreeNode(paramnode2,param2,locvars);
+         if (node->GetParamCount() > 1) {
+            paramnode2 = node->GetParam(1);
+            EvalTreeNode(paramnode2,param2,locvars);
+         } else {
+            param2->SetAtomType(atInt);
+            param2->SetInt(0);
+         }
       } while (param2->GetDouble()!=0);
       // what to return? (0 in case of at least one run? and 1 otherwise?)
       atom->SetAtomType(atInt);
@@ -1486,7 +1560,10 @@ void ByteCode::EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *>
    fun_datepart(f_week,tm_yday / 7 + 1)
    case f_date: {
       int c = node->GetParamCount();
-      struct tm tms;
+      // value-initialise: mktime() reads every field, including tm_isdst, so
+      // leaving them unset would read indeterminate stack memory whenever
+      // date() is called with fewer than six arguments
+      struct tm tms = {};
       int p=0;
       AtomEnt *param;
       int val;
@@ -1687,9 +1764,20 @@ void ByteCode::EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *>
       break;
    }
    case f_fun: {
-      // all we need to do is to remember location of this custom function
+      // A custom function must outlive the Process() call that parsed it:
+      // Process() frees the parsed tree, and in the REPL every input line is a
+      // separate Process(). Storing a raw pointer into that tree would leave
+      // custcodes dangling, so keep an owned deep copy instead.
       paramnode1 = node->GetParam(0);
-      custcodes[paramnode1->GetVarName()]=node;
+      string FunName = paramnode1->GetVarName();
+      map<string,TreeNode *>::iterator fit = custcodes.find(FunName);
+      if (fit != custcodes.end()) {
+         // redefining a function: release the previous definition
+         DeleteTreeNode(fit->second);
+         delete fit->second;
+         custcodes.erase(fit);
+      }
+      custcodes[FunName] = CloneTreeNode(node);
       atom->SetAtomType(atInt);
       atom->SetInt(0);
       break;
@@ -1853,6 +1941,9 @@ void ByteCode::EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *>
       // we need to create a recursive function to create a copy of each element and its sub-elements
       paramnode1 = node->GetParam(0);
       EvalTreeNode(paramnode1,param1,locvars);
+      // the list storage has to exist before we can append to it
+      atom->SetAtomType(atList);
+      atom->CreateListValue();
       for (int i=0; i<param1->GetListSize(); i++) {
          AtomEnt *elem = param1->GetListElem(i);
          AtomEnt *param = new AtomEnt();
@@ -1860,7 +1951,6 @@ void ByteCode::EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *>
          atom->AddListElem(param);
          // note: we don't delete param here because it stays in memory
       }
-      atom->SetAtomType(atList);
       break;
    }
 
@@ -1869,7 +1959,10 @@ void ByteCode::EvalTreeNode(TreeNode *node, AtomEnt *atom, map<string,AtomEnt *>
       //paramnode1 = node->GetParam(0);
       //TreeNode *funnode = custcodes[paramnode1->GetVarName()];
       if (debug) cout << "calling custom function: " << node->GetCustFunName() << endl;
-      TreeNode *funnode = custcodes[node->GetCustFunName()];
+      // find() rather than operator[]: a missing function would otherwise be
+      // inserted into custcodes as a NULL entry on every failed call
+      map<string,TreeNode *>::iterator fit = custcodes.find(node->GetCustFunName());
+      TreeNode *funnode = (fit != custcodes.end()) ? fit->second : NULL;
       if (funnode) {
          // if custom function found then evaluate it
          // put all parameters into local variables
@@ -1928,6 +2021,28 @@ void ByteCode::DeleteTreeNode(TreeNode *node)
    }
 }
 
+TreeNode *ByteCode::CloneTreeNode(TreeNode *node)
+{
+   // deep copy, so that a custom function can be kept after the tree it was
+   // parsed from has been freed
+   TreeNode *copy = new TreeNode();
+   copy->SetNodeType(node->GetNodeType());
+   copy->SetVarName(node->GetVarName());
+   copy->SetCustFunName(node->GetCustFunName());
+   // FunCode is only meaningful for ntFun; reading it on an atom or var node
+   // would touch uninitialised memory
+   if (node->GetNodeType()==ntFun) {
+      copy->SetFunCode(node->GetFunCode());
+   }
+   // parsed nodes only ever hold a number or a string, so a shallow copy of
+   // the atom is enough here (no list storage to alias)
+   copy->GetAtom()->Assign(node->GetAtom());
+   for (int i=0; i<node->GetParamCount(); i++) {
+      copy->AddParam(CloneTreeNode(node->GetParam(i)));
+   }
+   return copy;
+}
+
 void ByteCode::Process(const string& ACode)
 {
    clock_t stime = clock() / (CLOCKS_PER_SEC / 1000);
@@ -1965,8 +2080,8 @@ void ByteCode::Process(const string& ACode)
    // if we run in interactive mode then we don't need to clear vars.
    // in current version we clean vars only in destructor of ByteCode
 
-   // note: no need to clean custcodes because they contain only references to nodes
-   // and nodes are cleaned by DeleteTreeNode
+   // custcodes owns a deep copy of every fun() definition (see f_fun), so it
+   // stays valid after the tree above is freed. It is released in ~ByteCode.
 
    clock_t etime = clock() / (CLOCKS_PER_SEC / 1000);
    if (ShowRunTime) {

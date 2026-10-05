@@ -36,9 +36,9 @@ string strtrimleft(const string& str)
 
 string strtrimright(const string& str)
 {
-   size_t p=str.length()-1;
-   while (p>=0 && is_space(str[p])) p--;
-   return str.substr(0,p+1);
+   size_t p=str.length();
+   while (p>0 && is_space(str[p-1])) p--;
+   return str.substr(0,p);
 }
 
 string strtrim(const string& str)
@@ -144,6 +144,9 @@ bool IsLeapYear(int year)
 // in current version month is passed in range: 1..12
 int GetDaysInMonth(int year, int month)
 {
+   // a month outside 1..12 would index days[] out of bounds, so report it as
+   // a plain 0 rather than reading past the array
+   if (month<1 || month>12) return 0;
    int days[12]={31,28,31,30,31,30,31,31,30,31,30,31};
    int result = days[month-1];
    if (month==2 && IsLeapYear(year)) result++;
