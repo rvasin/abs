@@ -60,11 +60,11 @@ The CMake build is a convenience, not a requirement. The whole interpreter is:
 g++ src/*.cpp -Iinclude/ -o abs -O3 -s -static
 ```
 
-Note the `src/*.cpp` glob. `include/atoment.h` uses `vector` without including
-`<vector>`, and only `src/atoment.cpp` includes it first, so that translation
-unit is the one that breaks if the include order in `abs.h` or `atoment.h` is
-disturbed. `src/abs.cpp` and `src/absmain.cpp` include `abs.h` first and would
-still compile.
+Note the `src/*.cpp` glob: building only `src/abs.cpp` would miss three
+translation units. That mattered when `include/atoment.h` used `vector`
+without including `<vector>` — only `src/atoment.cpp` included that header
+first, so it was the single TU that failed while the others still compiled.
+The header now includes `<vector>` itself and every file builds standalone.
 
 On MinGW use `-std=gnu++11` rather than `-std=c++11`: `run()` needs `popen`,
 which is a GNU extension there. The CMake build sets

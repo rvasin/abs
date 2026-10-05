@@ -12,7 +12,9 @@ python3 -m pytest                              # 136 black-box tests
 
 CMake 3.15+, C++11 with extensions ON. The extension matters: on MinGW `run()` needs `popen`, so `-std=c++11` fails and `-std=gnu++11` works. `docs/building.md` covers the CMake options (`ABS_STATIC`) and the hand-rolled `g++ src/*.cpp -Iinclude/ -o abs` fallback.
 
-`include/atoment.h` declares `vector<AtomEnt *>` members and has no `#include <vector>`. It works only because `abs.h` includes `<vector>` *before* `atoment.h`, and `atoment.h` pulls `using namespace std` from `utils.h`. So `src/abs.cpp` and `src/absmain.cpp` compile fine while `src/atoment.cpp` — the only TU that includes `atoment.h` first — produces ~24 errors. Reordering or trimming includes in either header breaks that silently. The CMake build compiles all TUs, so it catches this; a partial build may not.
+All four translation units compile standalone under `-std=c++11`. That was not true before `941059c`: `include/atoment.h` uses `vector` but had no `#include <vector>`, so it only built if something else included it first, and `src/atoment.cpp` — the one TU that includes `atoment.h` first — failed with ~24 errors. The header now includes `<vector>` itself. Don't remove it.
+
+One genuine coupling is left. `atoment.h` writes `vector` unqualified, so it needs `using namespace std`, which it gets from `utils.h` included at line 16; the first bare `vector` is not until line 28. Moving the `utils.h` include below line 28 breaks it. Qualifying those four occurrences as `std::vector` would remove the last order dependency.
 
 `.gitignore` covers `build/`, the CMake files, Python caches, `backup/`, the bare `abs` binary and `abs.zip`.
 
